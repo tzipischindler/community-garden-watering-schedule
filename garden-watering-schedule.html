@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Garden Watering Schedule</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Karla:wght@400;500;600;700&display=swap');
+
+  :root{
+    --paper: #F4F0E4;
+    --ink: #2B2A22;
+    --deep-green: #2F4A3B;
+    --leaf: #6C8F5A;
+    --clay: #B8622E;
+    --sky: #7C9CA0;
+    --line: #D8D2BE;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Karla', sans-serif;
+    min-height: 100vh;
+    padding: 40px 20px 80px;
+  }
+
+  .wrap {
+    max-width: 880px;
+    margin: 0 auto;
+  }
+
+  header {
+    margin-bottom: 32px;
+  }
+
+  .kicker {
+    font-size: 15px;
+    color: var(--leaf);
+    margin: 0 0 6px;
+    font-weight: 600;
+  }
+
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: clamp(32px, 5vw, 46px);
+    line-height: 1.05;
+    margin: 0 0 12px;
+    color: var(--deep-green);
+  }
+
+  .sub {
+    font-size: 16px;
+    line-height: 1.5;
+    max-width: 60ch;
+    color: #55503f;
+    margin: 0;
+  }
+
+  .week-bar {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin: 32px 0 14px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .week-label {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    color: var(--deep-green);
+  }
+
+  .status {
+    font-size: 13px;
+    color: #8b8570;
+    min-height: 18px;
+  }
+
+  .table-shell {
+    border: 1.5px solid var(--deep-green);
+    border-radius: 4px;
+    overflow: hidden;
+    background: #fffdf7;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+
+  th, td {
+    border: 1px solid var(--line);
+    padding: 0;
+  }
+
+  th {
+    background: var(--deep-green);
+    color: #fdfbf3;
+    font-family: 'Karla', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 12px 6px;
+    text-align: left;
+  }
+
+  th .day-date {
+    display: block;
+    font-weight: 400;
+    opacity: 0.75;
+    font-size: 11px;
+    margin-top: 2px;
+  }
+
+  .row-label {
+    background: #efe9d8;
+    font-size: 20px;
+    color: var(--deep-green);
+    text-align: center;
+    padding: 0;
+    white-space: nowrap;
+    width: 46px;
+  }
+
+  td input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    padding: 14px 10px;
+    font-family: 'Karla', sans-serif;
+    font-size: 14px;
+    color: var(--ink);
+    outline: none;
+  }
+
+  td input:focus {
+    background: #f2ecd9;
+    box-shadow: inset 0 0 0 2px var(--sky);
+  }
+
+  td.filled input {
+    color: var(--deep-green);
+    font-weight: 600;
+  }
+
+  .actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 18px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .hint {
+    font-size: 13px;
+    color: #8b8570;
+    max-width: 46ch;
+    line-height: 1.5;
+  }
+
+  button.reset {
+    border: 1.5px solid var(--clay);
+    color: var(--clay);
+    background: transparent;
+    font-family: 'Karla', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 9px 16px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  button.reset:hover {
+    background: var(--clay);
+    color: #fffdf7;
+  }
+
+  .confirm-box {
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--clay);
+    display: none;
+  }
+
+  .confirm-box.show { display: block; }
+
+  .confirm-box button {
+    border: none;
+    background: none;
+    text-decoration: underline;
+    font-weight: 700;
+    color: var(--clay);
+    cursor: pointer;
+    font-size: 13px;
+    padding: 0;
+    margin-left: 4px;
+  }
+
+  @media (max-width: 640px) {
+    .row-label { width: 34px; font-size: 16px; }
+    th { font-size: 11px; padding: 8px 4px; }
+    td input { padding: 10px 4px; font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="kicker">Community garden</p>
+    <h1>Who's watering this week?</h1>
+    <p class="sub">Type your name in a box to take a shift. No login — anyone with this link can sign up or clear a spot. The sheet resets itself each Sunday.</p>
+  </header>
+
+  <div class="week-bar">
+    <span class="week-label" id="weekLabel">Loading week…</span>
+    <span class="status" id="status"></span>
+  </div>
+
+  <div class="table-shell">
+    <table id="scheduleTable">
+      <thead>
+        <tr>
+          <th style="background:#efe9d8; color:var(--deep-green);"></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="actions">
+    <p class="hint">Each week gets its own clean sheet automatically. Use "Clear this week" only if you need to wipe everyone's entries early.</p>
+    <button class="reset" id="resetBtn">Clear this week</button>
+  </div>
+  <div class="confirm-box" id="confirmBox">
+    This will erase every name for this week for everyone. <button id="confirmYes">Yes, clear it</button> · <button id="confirmNo">Cancel</button>
+  </div>
+</div>
+
+<script>
+const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const STORAGE_URL = 'https://script.google.com/macros/s/AKfycbwBE1nKHht471-pKHaNBNQ_uD7Ljy2y7m-GJdSkcIfEBe9UIm3qWjbYm7HAjzmrJ7vV/exec';
+const ROWS = [
+  { key: 'morning', icon: '☀' },
+  { key: 'evening', icon: '☾' }
+];
+
+function getWeekStart(d) {
+  const date = new Date(d);
+  date.setHours(0,0,0,0);
+  date.setDate(date.getDate() - date.getDay()); // back up to Sunday
+  return date;
+}
+
+function isoDate(d) {
+  return d.toISOString().slice(0,10);
+}
+
+function formatShort(d) {
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+const weekStart = getWeekStart(new Date());
+const weekKey = 'watering:' + isoDate(weekStart);
+const weekDates = Array.from({length:7}, (_,i) => {
+  const d = new Date(weekStart);
+  d.setDate(d.getDate() + i);
+  return d;
+});
+
+const statusEl = document.getElementById('status');
+const weekLabelEl = document.getElementById('weekLabel');
+const tbody = document.querySelector('#scheduleTable tbody');
+const thead = document.querySelector('#scheduleTable thead tr');
+
+weekLabelEl.textContent = 'Week of ' + formatShort(weekDates[0]) + ' – ' + formatShort(weekDates[6]);
+
+// Build header
+weekDates.forEach((d, i) => {
+  const th = document.createElement('th');
+  th.innerHTML = DAY_NAMES[i] + '<span class="day-date">' + formatShort(d) + '</span>';
+  thead.appendChild(th);
+});
+
+let state = { morning: Array(7).fill(''), evening: Array(7).fill('') };
+let saveTimer = null;
+
+function buildRows() {
+  tbody.innerHTML = '';
+  ROWS.forEach(row => {
+    const tr = document.createElement('tr');
+    const labelTd = document.createElement('td');
+    labelTd.className = 'row-label';
+    labelTd.textContent = row.icon;
+    tr.appendChild(labelTd);
+
+    for (let i = 0; i < 7; i++) {
+      const td = document.createElement('td');
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = 'add your name';
+      input.value = state[row.key][i] || '';
+      input.maxLength = 30;
+      if (input.value) td.classList.add('filled');
+      input.addEventListener('input', () => {
+        state[row.key][i] = input.value;
+        td.classList.toggle('filled', !!input.value);
+        scheduleSave();
+      });
+      td.appendChild(input);
+      tr.appendChild(td);
+    }
+    tbody.appendChild(tr);
+  });
+}
+
+function scheduleSave() {
+  statusEl.textContent = 'Saving…';
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveState, 500);
+}
+
+async function saveState() {
+  if (!STORAGE_URL) {
+    localStorage.setItem(weekKey, JSON.stringify(state));
+    statusEl.textContent = 'Saved on this device';
+    return;
+  }
+
+  try {
+    await fetch(STORAGE_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ key: weekKey, state })
+    });
+    statusEl.textContent = 'Saved';
+    setTimeout(() => { if (statusEl.textContent === 'Saved') statusEl.textContent = ''; }, 1500);
+  } catch (e) {
+    statusEl.textContent = 'Could not save — try again';
+  }
+}
+
+function loadLocalState() {
+  const saved = localStorage.getItem(weekKey);
+  if (!saved) return;
+
+  const parsed = JSON.parse(saved);
+  state = {
+    morning: parsed.morning && parsed.morning.length === 7 ? parsed.morning : Array(7).fill(''),
+    evening: parsed.evening && parsed.evening.length === 7 ? parsed.evening : Array(7).fill('')
+  };
+}
+
+function loadState() {
+  if (!STORAGE_URL) {
+    try { loadLocalState(); } catch (e) { /* Start blank if local data is invalid. */ }
+    buildRows();
+    return;
+  }
+
+  const callbackName = 'receiveWateringSchedule' + Date.now();
+  const script = document.createElement('script');
+  const cleanup = () => {
+    delete window[callbackName];
+    script.remove();
+  };
+
+  window[callbackName] = (result) => {
+    if (result && result.state) {
+      state = result.state;
+    }
+    cleanup();
+    buildRows();
+  };
+  script.onerror = () => {
+    cleanup();
+    statusEl.textContent = 'Could not load schedule';
+    buildRows();
+  };
+  script.src = STORAGE_URL + '?key=' + encodeURIComponent(weekKey) + '&callback=' + callbackName;
+  document.head.appendChild(script);
+}
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  document.getElementById('confirmBox').classList.add('show');
+});
+document.getElementById('confirmNo').addEventListener('click', () => {
+  document.getElementById('confirmBox').classList.remove('show');
+});
+document.getElementById('confirmYes').addEventListener('click', async () => {
+  state = { morning: Array(7).fill(''), evening: Array(7).fill('') };
+  buildRows();
+  document.getElementById('confirmBox').classList.remove('show');
+  await saveState();
+});
+
+loadState();
+</script>
+</body>
+</html>
